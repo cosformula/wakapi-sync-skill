@@ -23,6 +23,9 @@ jobs:
             fi
           done
 
+      - name: Run tests
+        run: node --test tests/*.test.mjs tests/*.test.js 2>/dev/null || node --test tests/*.test.mjs
+
   package-check:
     runs-on: ubuntu-latest
     steps:
