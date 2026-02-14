@@ -141,7 +141,7 @@ describe('extractTopFromStatusbarToday', () => {
       data: {
         grand_total: { total_seconds: 4899 },
         projects: [
-          { name: 'mod-pod', total_seconds: 4899, percent: 100 },
+          { name: 'my-project', total_seconds: 4899, percent: 100 },
         ],
         languages: [
           { name: 'Unknown', total_seconds: 4836, percent: 98.73 },
@@ -152,7 +152,7 @@ describe('extractTopFromStatusbarToday', () => {
     const { totalSeconds, projects, languages } = extractTopFromStatusbarToday(statusbar);
     assert.equal(totalSeconds, 4899);
     assert.equal(projects.length, 1);
-    assert.equal(projects[0].name, 'mod-pod');
+    assert.equal(projects[0].name, 'my-project');
     assert.equal(languages.length, 2);
     assert.equal(languages[0].name, 'Unknown');
   });
@@ -178,8 +178,8 @@ describe('extractFromSummariesToday', () => {
       data: [{
         grand_total: { total_seconds: 7200 },
         projects: [
-          { name: 'bus-sim', total_seconds: 5000, percent: 69.4 },
-          { name: 'metro', total_seconds: 2200, percent: 30.6 },
+          { name: 'project-x', total_seconds: 5000, percent: 69.4 },
+          { name: 'project-y', total_seconds: 2200, percent: 30.6 },
         ],
         languages: [
           { name: 'GDScript', total_seconds: 7200, percent: 100 },
@@ -189,7 +189,7 @@ describe('extractFromSummariesToday', () => {
     const { totalSeconds, projects, languages } = extractFromSummariesToday(summaries);
     assert.equal(totalSeconds, 7200);
     assert.equal(projects.length, 2);
-    assert.equal(projects[0].name, 'bus-sim');
+    assert.equal(projects[0].name, 'project-x');
     assert.equal(languages.length, 1);
   });
 });
@@ -241,22 +241,22 @@ describe('upsertCsvByKeys', () => {
     const file = path.join(tmpDir, 'ranked.csv');
     const header = ['date', 'rank', 'project'];
     const rows = [
-      { date: '2026-02-14', rank: '1', project: 'bus-sim' },
-      { date: '2026-02-14', rank: '2', project: 'metro' },
+      { date: '2026-02-14', rank: '1', project: 'project-a' },
+      { date: '2026-02-14', rank: '2', project: 'project-b' },
     ];
 
     await upsertCsvByKeys(file, header, ['date', 'rank'], rows);
 
     // Update rank 1
     await upsertCsvByKeys(file, header, ['date', 'rank'], [
-      { date: '2026-02-14', rank: '1', project: 'mod-pod' },
+      { date: '2026-02-14', rank: '1', project: 'project-c' },
     ]);
 
     const { rows: parsed } = parseCsvSimple(await fs.readFile(file, 'utf8'));
     const rank1 = parsed.find(r => r.date === '2026-02-14' && r.rank === '1');
-    assert.equal(rank1.project, 'mod-pod');
+    assert.equal(rank1.project, 'project-c');
     const rank2 = parsed.find(r => r.date === '2026-02-14' && r.rank === '2');
-    assert.equal(rank2.project, 'metro');
+    assert.equal(rank2.project, 'project-b');
   });
 
   // Cleanup

@@ -19,12 +19,12 @@ Daily Wakapi (WakaTime-compatible) summary → local CSV files.
 
 ## Configuration (env vars)
 - `WAKAPI_URL` (required)
-  - Example: `https://wakapi.app.cosformula.org`
+  - Example: `https://wakapi.example.com`
 - `WAKAPI_API_KEY` (required)
   - Your Wakapi API key.
 - `WAKAPI_OUT_DIR` (required)
   - Output directory for CSVs.
-  - Example: `/Users/zhaoyiqun/clawd/obsidian-vault/编码统计/wakapi`
+  - Example: `~/wakapi-data`
 
 Optional:
 - `WAKAPI_TOP_N_PROJECTS` (default: `10`)
