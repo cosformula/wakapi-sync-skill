@@ -1,0 +1,81 @@
+name: Publish to ClawHub
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Semver version to publish (e.g. 0.1.0)"
+        required: true
+      changelog:
+        description: "Changelog text (shown on ClawHub)"
+        required: true
+        default: "Update"
+      tags:
+        description: "Comma-separated tags (default: latest)"
+        required: false
+        default: "latest"
+
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build clean publish dir (rsync + .clawhubignore)
+        run: |
+          set -euo pipefail
+          OUT=/tmp/skill
+          rm -rf "$OUT"
+          mkdir -p "$OUT"
+
+          rsync -a --delete --exclude-from=.clawhubignore ./ "$OUT/"
+          test -f "$OUT/SKILL.md"
+
+          echo "Publish dir contents:"
+          find "$OUT" -maxdepth 3 -type f -print
+
+      - name: Install ClawHub CLI
+        run: |
+          npm i -g clawhub@latest
+          clawhub --help >/dev/null
+
+      - name: Login to ClawHub
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          clawhub login --token "$CLAWHUB_TOKEN" --no-browser
+          clawhub whoami
+
+      - name: Publish
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_CHANGELOG: ${{ inputs.changelog }}
+          INPUT_TAGS: ${{ inputs.tags }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            VERSION="$INPUT_VERSION"
+            CHANGELOG="$INPUT_CHANGELOG"
+            TAGS="$INPUT_TAGS"
+          else
+            VERSION="${REF_NAME#v}"
+            CHANGELOG="Release ${REF_NAME}"
+            TAGS="latest"
+          fi
+
+          echo "Publishing version=$VERSION tags=$TAGS" >&2
+
+          clawhub publish /tmp/skill \
+            --slug wakapi-sync-skill \
+            --version "$VERSION" \
+            --changelog "$CHANGELOG" \
+            --tags "$TAGS"
