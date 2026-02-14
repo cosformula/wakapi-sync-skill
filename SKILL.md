@@ -1,3 +1,9 @@
+---
+name: wakapi-sync
+description: Daily Wakapi (WakaTime-compatible) summary → local CSV files. Fetch today stats and append/update CSVs for totals, top projects, and top languages.
+metadata: {"openclaw": {"requires": {"env": ["WAKAPI_URL", "WAKAPI_API_KEY", "WAKAPI_OUT_DIR"]}, "primaryEnv": "WAKAPI_OUT_DIR"}}
+---
+
 # wakapi-sync
 
 Daily Wakapi (WakaTime-compatible) summary → local CSV files.
