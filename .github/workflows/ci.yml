@@ -23,8 +23,15 @@ jobs:
             fi
           done
 
-      - name: Run tests
-        run: node --test tests/*.test.mjs tests/*.test.js 2>/dev/null || node --test tests/*.test.mjs
+      - name: Run unit + fixture tests
+        run: node --test tests/*.test.mjs
+
+      - name: Run live E2E tests
+        if: env.WAKAPI_URL != ''
+        env:
+          WAKAPI_URL: ${{ secrets.WAKAPI_URL }}
+          WAKAPI_API_KEY: ${{ secrets.WAKAPI_API_KEY }}
+        run: node --test tests/e2e-live.test.mjs
 
   package-check:
     runs-on: ubuntu-latest
