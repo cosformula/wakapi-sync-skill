@@ -17,15 +17,19 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const WAKAPI_URL = process.env.WAKAPI_URL;
-const WAKAPI_API_KEY = process.env.WAKAPI_API_KEY;
-const OUT_DIR = process.env.WAKAPI_OUT_DIR;
-const TOP_N_PROJECTS = Number(process.env.WAKAPI_TOP_N_PROJECTS || 10);
-const TOP_N_LANGUAGES = Number(process.env.WAKAPI_TOP_N_LANGUAGES || 10);
+function getConfig() {
+  const WAKAPI_URL = process.env.WAKAPI_URL;
+  const WAKAPI_API_KEY = process.env.WAKAPI_API_KEY;
+  const OUT_DIR = process.env.WAKAPI_OUT_DIR;
+  const TOP_N_PROJECTS = Number(process.env.WAKAPI_TOP_N_PROJECTS || 10);
+  const TOP_N_LANGUAGES = Number(process.env.WAKAPI_TOP_N_LANGUAGES || 10);
 
-if (!WAKAPI_URL || !WAKAPI_API_KEY || !OUT_DIR) {
-  console.error('Missing required env vars: WAKAPI_URL, WAKAPI_API_KEY, WAKAPI_OUT_DIR');
-  process.exit(2);
+  if (!WAKAPI_URL || !WAKAPI_API_KEY || !OUT_DIR) {
+    console.error('Missing required env vars: WAKAPI_URL, WAKAPI_API_KEY, WAKAPI_OUT_DIR');
+    process.exit(2);
+  }
+
+  return { WAKAPI_URL, WAKAPI_API_KEY, OUT_DIR, TOP_N_PROJECTS, TOP_N_LANGUAGES };
 }
 
 function ymdLocal(date = new Date()) {
@@ -39,10 +43,10 @@ function b64(str) {
   return Buffer.from(str, 'utf8').toString('base64');
 }
 
-async function httpJson(url) {
+async function httpJson(url, apiKey) {
   const headers = {
     'Accept': 'application/json',
-    'Authorization': `Basic ${b64(WAKAPI_API_KEY)}`,
+    'Authorization': `Basic ${b64(apiKey)}`,
   };
 
   const res = await fetch(url, { headers });
@@ -185,6 +189,7 @@ function extractFromSummariesToday(summaries) {
 }
 
 async function main() {
+  const { WAKAPI_URL, WAKAPI_API_KEY, OUT_DIR, TOP_N_PROJECTS, TOP_N_LANGUAGES } = getConfig();
   const date = ymdLocal();
 
   const base = WAKAPI_URL.replace(/\/$/, '');
@@ -193,7 +198,7 @@ async function main() {
 
   let statusbar;
   try {
-    statusbar = await httpJson(statusbarUrl);
+    statusbar = await httpJson(statusbarUrl, WAKAPI_API_KEY);
   } catch (e) {
     console.error(`[wakapi-sync] Failed statusbar/today: ${e.message}`);
     throw e;
@@ -204,7 +209,7 @@ async function main() {
   // If statusbar doesn't contain top lists, fallback to summaries.
   const needFallback = (!projects?.length && !languages?.length) || (totalSeconds == null);
   if (needFallback) {
-    const summaries = await httpJson(summariesUrl);
+    const summaries = await httpJson(summariesUrl, WAKAPI_API_KEY);
     const extracted = extractFromSummariesToday(summaries);
     totalSeconds = totalSeconds ?? extracted.totalSeconds;
     projects = projects?.length ? projects : extracted.projects;
@@ -266,7 +271,24 @@ async function main() {
   console.log(`[wakapi-sync] Wrote ${date}: total=${totalHours}h, projects=${projectsTop.length}, languages=${languagesTop.length}`);
 }
 
-main().catch((e) => {
-  console.error(e?.stack || String(e));
-  process.exit(1);
-});
+// Allow importing functions for testing without running main().
+import { fileURLToPath } from 'node:url';
+const __filename = fileURLToPath(import.meta.url);
+if (process.argv[1] === __filename) {
+  main().catch((e) => {
+    console.error(e?.stack || String(e));
+    process.exit(1);
+  });
+}
+
+export {
+  csvEscape,
+  rowsToCsv,
+  parseCsvSimple,
+  upsertCsvByKeys,
+  extractTopFromStatusbarToday,
+  extractFromSummariesToday,
+  toHours,
+  ymdLocal,
+  pickTop,
+};
