@@ -17,12 +17,13 @@ jobs:
 
       - name: Node syntax checks
         run: |
+          status=0
           for f in scripts/*.mjs scripts/*.js; do
-            if [[ -f "$f" ]]; then
-              echo "[syntax] $f"
-              node --check "$f"
-            fi
+            [ -f "$f" ] || continue
+            echo "[syntax] $f"
+            node --check "$f" || status=1
           done
+          exit $status
 
       - name: Run unit + fixture tests
         run: node --test tests/*.test.mjs
