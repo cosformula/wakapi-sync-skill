@@ -9,6 +9,26 @@
 
 Daily Wakapi (WakaTime-compatible) summary → local CSV files.
 
+## Install
+
+### Via npx skills (any agent)
+
+```bash
+npx skills add cosformula/wakapi-sync-skill
+```
+
+### Via ClawHub (OpenClaw)
+
+```bash
+clawhub install wakapi-sync-skill
+```
+
+### Manual
+
+```bash
+git clone https://github.com/cosformula/wakapi-sync-skill.git
+```
+
 ## Quick start
 
 ```bash
