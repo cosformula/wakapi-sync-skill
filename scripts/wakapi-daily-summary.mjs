@@ -273,8 +273,10 @@ async function main() {
 
 // Allow importing functions for testing without running main().
 import { fileURLToPath } from 'node:url';
+import { realpathSync } from 'node:fs';
 const __filename = fileURLToPath(import.meta.url);
-if (process.argv[1] === __filename) {
+// Compare via realpath to handle symlinks (e.g. skills/ -> projects/)
+if (realpathSync(process.argv[1]) === realpathSync(__filename)) {
   main().catch((e) => {
     console.error(e?.stack || String(e));
     process.exit(1);
